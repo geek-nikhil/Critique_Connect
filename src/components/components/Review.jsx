@@ -6,6 +6,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { motion, AnimatePresence, useAnimation } from 'framer-motion';
 import { useInView } from 'react-intersection-observer';
 import gsap from 'gsap';
+import SentimentDonutChart from './SentimentDonutChart';
 
 const Review = () => {
   const location = useLocation();
@@ -214,6 +215,24 @@ const Review = () => {
     setSelectedTask(task);
     setShowModal(true);
     fetchSummary(task);
+  };
+
+  // Function to convert percentage string to number
+  const percentToNumber = (percentStr) => {
+    return parseInt(percentStr?.replace('%', '') || 0);
+  };
+  
+  // Function to determine dominant sentiment
+  const getDominantSentiment = (sentimentData) => {
+    if (!sentimentData) return 'neutral';
+    
+    const positive = percentToNumber(sentimentData.positive);
+    const neutral = percentToNumber(sentimentData.neutral);
+    const negative = percentToNumber(sentimentData.negative);
+    
+    if (positive >= neutral && positive >= negative) return 'positive';
+    if (negative >= positive && negative >= neutral) return 'negative';
+    return 'neutral';
   };
 
   return (
@@ -460,59 +479,66 @@ const Review = () => {
                   </div>
                 ) : summaryData ? (
                   <motion.div 
-                    className="mb-6 bg-[#1a0b2e]/70 backdrop-blur-sm p-6 rounded-lg border border-[#9c4dff]/20 shadow-lg"
+                    className="mb-6"
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.5 }}
                   >
-                    <h3 className="text-xl font-semibold text-gray-200 mb-4 flex items-center">
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 text-[#c840eb]" viewBox="0 0 20 20" fill="currentColor">
-                        <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
-                      </svg>
-                      Feedback Summary
-                    </h3>
+                    {/* Use the new SentimentDonutChart component */}
+                    <SentimentDonutChart sentimentData={summaryData.sentiment_analysis} />
                     
-                    {/* Sentiment Analysis */}
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-5">
-                      <div className="bg-[#1a0b2e]/90 p-4 rounded-lg text-center border border-[#9c4dff]/10">
-                        <div className="text-green-400 font-semibold mb-1">Positive</div>
-                        <div className="text-2xl font-bold">{summaryData.sentiment_analysis?.positive || '0%'}</div>
-                      </div>
-                      <div className="bg-[#1a0b2e]/90 p-4 rounded-lg text-center border border-[#9c4dff]/10">
-                        <div className="text-yellow-400 font-semibold mb-1">Neutral</div>
-                        <div className="text-2xl font-bold">{summaryData.sentiment_analysis?.neutral || '0%'}</div>
-                      </div>
-                      <div className="bg-[#1a0b2e]/90 p-4 rounded-lg text-center border border-[#9c4dff]/10">
-                        <div className="text-red-400 font-semibold mb-1">Negative</div>
-                        <div className="text-2xl font-bold">{summaryData.sentiment_analysis?.negative || '0%'}</div>
-                      </div>
-                    </div>
-                    
-                    {/* Overall Summary */}
-                    <div className="mb-5 bg-[#1a0b2e]/40 p-4 rounded-lg border border-[#9c4dff]/10">
-                      <h4 className="font-semibold text-[#c840eb] mb-2 flex items-center">
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    {/* Keep the existing Overall Summary section */}
+                    <div className="mb-5 mt-6 bg-[#1a0b2e]/40 backdrop-blur-md p-5 rounded-lg border border-[#9c4dff]/30 shadow-lg relative overflow-hidden group">
+                      {/* Animated gradient border effect */}
+                      <div className="absolute inset-0 bg-gradient-to-r from-[#9c4dff]/0 via-[#9c4dff]/30 to-[#9c4dff]/0 opacity-0 group-hover:opacity-100 transition-opacity duration-1000 blur-xl"></div>
+                      
+                      <h4 className="font-semibold text-[#c840eb] mb-3 flex items-center text-lg">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
                         </svg>
                         Overall Summary
                       </h4>
-                      <p className="text-gray-300 leading-relaxed">{summaryData.overall_summary}</p>
+                      
+                      <div className="relative z-10">
+                        {/* Quote marks for summary */}
+                        <svg className="absolute -top-2 -left-2 w-8 h-8 text-[#9c4dff]/20" fill="currentColor" viewBox="0 0 32 32">
+                          <path d="M9.33333 21.3333C7.86667 21.3333 6.66667 20.8 5.73333 19.7333C4.8 18.6667 4.33333 17.3333 4.33333 15.7333C4.33333 14.2 4.73333 12.7333 5.53333 11.3333C6.33333 10 7.33333 8.86667 8.53333 7.93333L10.6667 10.1333C9.66667 10.9333 8.93333 11.7333 8.46667 12.5333C8 13.3333 7.86667 14.0667 8.06667 14.7333C8.4 14.6 8.73333 14.5333 9.06667 14.5333C10.2 14.5333 11.1333 14.9333 11.8667 15.7333C12.6 16.5333 12.9667 17.4667 12.9667 18.5333C12.9667 19.6 12.6 20.5333 11.8667 21.3333C11.1333 22.1333 10.3333 21.4667 9.33333 21.3333ZM21.3333 21.3333C19.8667 21.3333 18.6667 20.8 17.7333 19.7333C16.8 18.6667 16.3333 17.3333 16.3333 15.7333C16.3333 14.2 16.7333 12.7333 17.5333 11.3333C18.3333 10 19.3333 8.86667 20.5333 7.93333L22.6667 10.1333C21.6667 10.9333 20.9333 11.7333 20.4667 12.5333C20 13.3333 19.8667 14.0667 20.0667 14.7333C20.4 14.6 20.7333 14.5333 21.0667 14.5333C22.2 14.5333 23.1333 14.9333 23.8667 15.7333C24.6 16.5333 24.9667 17.4667 24.9667 18.5333C24.9667 19.6 24.6 20.5333 23.8667 21.3333C23.1333 22.1333 22.3333 21.4667 21.3333 21.3333Z" />
+                        </svg>
+                        
+                        <p className="text-gray-300 leading-relaxed pl-6 italic">{summaryData.overall_summary}</p>
+                        
+                        {/* Bottom quote mark */}
+                        <svg className="absolute -bottom-2 -right-2 w-8 h-8 text-[#9c4dff]/20 transform rotate-180" fill="currentColor" viewBox="0 0 32 32">
+                          <path d="M9.33333 21.3333C7.86667 21.3333 6.66667 20.8 5.73333 19.7333C4.8 18.6667 4.33333 17.3333 4.33333 15.7333C4.33333 14.2 4.73333 12.7333 5.53333 11.3333C6.33333 10 7.33333 8.86667 8.53333 7.93333L10.6667 10.1333C9.66667 10.9333 8.93333 11.7333 8.46667 12.5333C8 13.3333 7.86667 14.0667 8.06667 14.7333C8.4 14.6 8.73333 14.5333 9.06667 14.5333C10.2 14.5333 11.1333 14.9333 11.8667 15.7333C12.6 16.5333 12.9667 17.4667 12.9667 18.5333C12.9667 19.6 12.6 20.5333 11.8667 21.3333C11.1333 22.1333 10.3333 21.4667 9.33333 21.3333ZM21.3333 21.3333C19.8667 21.3333 18.6667 20.8 17.7333 19.7333C16.8 18.6667 16.3333 17.3333 16.3333 15.7333C16.3333 14.2 16.7333 12.7333 17.5333 11.3333C18.3333 10 19.3333 8.86667 20.5333 7.93333L22.6667 10.1333C21.6667 10.9333 20.9333 11.7333 20.4667 12.5333C20 13.3333 19.8667 14.0667 20.0667 14.7333C20.4 14.6 20.7333 14.5333 21.0667 14.5333C22.2 14.5333 23.1333 14.9333 23.8667 15.7333C24.6 16.5333 24.9667 17.4667 24.9667 18.5333C24.9667 19.6 24.6 20.5333 23.8667 21.3333C23.1333 22.1333 22.3333 21.4667 21.3333 21.3333Z" />
+                        </svg>
+                      </div>
                     </div>
                     
-                    {/* Improvement Points */}
+                    {/* Keep the existing Improvement Points section */}
                     {summaryData.improvement_points && summaryData.improvement_points.length > 0 && (
-                      <div className="bg-[#1a0b2e]/40 p-4 rounded-lg border border-[#9c4dff]/10">
-                        <h4 className="font-semibold text-[#c840eb] mb-2 flex items-center">
-                          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <div className="bg-[#1a0b2e]/40 backdrop-blur-md p-5 rounded-lg border border-[#9c4dff]/30 shadow-lg">
+                        <h4 className="font-semibold text-[#c840eb] mb-3 flex items-center text-lg">
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
                           </svg>
                           Areas for Improvement
                         </h4>
-                        <ul className="list-disc pl-5 space-y-2">
+                        
+                        <div className="space-y-3">
                           {summaryData.improvement_points.map((point, index) => (
-                            <li key={index} className="text-gray-300">{point}</li>
+                            <div 
+                              key={index} 
+                              className="flex items-start p-3 bg-[#1a0b2e]/60 rounded-lg border border-[#9c4dff]/10 transition-all duration-300 hover:border-[#9c4dff]/30 hover:shadow-md"
+                            >
+                              <div className="bg-[#9c4dff]/20 rounded-full p-1.5 mr-3 flex-shrink-0">
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-[#c840eb]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                                </svg>
+                              </div>
+                              <p className="text-gray-300">{point}</p>
+                            </div>
                           ))}
-                        </ul>
+                        </div>
                       </div>
                     )}
                   </motion.div>
