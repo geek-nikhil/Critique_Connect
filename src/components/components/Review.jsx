@@ -17,6 +17,8 @@ const Review = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
   const [hoveredTaskId, setHoveredTaskId] = useState(null);
+  const [summaryData, setSummaryData] = useState(null);
+  const [summaryLoading, setSummaryLoading] = useState(false);
   
   // Refs for GSAP animations
   const pageRef = useRef(null);
@@ -185,17 +187,46 @@ const Review = () => {
     fetchTasksWithCategories();
   }, [email]);
 
+  // Fetch summary data for the selected task
+  const fetchSummary = async (task) => {
+    if (!task || !task.categoryName || !task.title) return;
+    
+    setSummaryLoading(true);
+    setSummaryData(null);
+    
+    try {
+      const response = await axios.post('https://critiquebackend.onrender.com/summary', {
+        category: task.categoryName.toLowerCase(),
+        title: task.title
+      });
+      
+      console.log('Summary data:', response.data);
+      setSummaryData(response.data);
+    } catch (error) {
+      console.error('Error fetching summary data:', error);
+    } finally {
+      setSummaryLoading(false);
+    }
+  };
+
+  // Handle task selection and fetch summary
+  const handleTaskSelect = (task) => {
+    setSelectedTask(task);
+    setShowModal(true);
+    fetchSummary(task);
+  };
+
   return (
     <>
       <Navbar />
       <div 
         ref={pageRef}
-        className="relative min-h-screen bg-[#080312] pt-32 pb-16 px-4 sm:px-6 lg:px-8 overflow-hidden"
+        className="relative min-h-screen bg-[#080312] pt-24 pb-16 px-4 sm:px-6 lg:px-8 overflow-hidden"
       >
-        {/* Background gradient */}
+        {/* Background layers */}
         <div className="absolute inset-0 bg-gradient-radial from-[#1a0b2e] via-[#130822] to-[#080312] z-0"></div>
         
-        {/* Dynamic grid lines */}
+        {/* Dynamic grid lines - subtle background pattern */}
         <div 
           ref={gridRef}
           className="absolute inset-0 opacity-10 z-0"
@@ -210,11 +241,11 @@ const Review = () => {
           }}
         />
         
-        {/* Animated glow orbs */}
+        {/* Animated glow orbs - create depth */}
         <div className="absolute top-1/4 left-1/4 w-[600px] h-[600px] rounded-full bg-[#9c4dff]/10 blur-[150px] animate-pulse-slow z-0"></div>
         <div className="absolute bottom-1/4 right-1/4 w-[500px] h-[500px] rounded-full bg-[#ff5089]/10 blur-[150px] animate-pulse-slow animation-delay-1000 z-0"></div>
         
-        {/* Light streaks */}
+        {/* Light streaks - dynamic effect */}
         <div ref={streaksRef} className="absolute inset-0 overflow-hidden pointer-events-none z-0">
           {[...Array(5)].map((_, i) => (
             <div 
@@ -231,9 +262,9 @@ const Review = () => {
           ))}
         </div>
         
-        {/* Main content */}
+        {/* Main content container */}
         <div className="max-w-4xl mx-auto relative z-10">
-          {/* Header Section */}
+          {/* Header Section with page title */}
           <motion.div 
             ref={headerRef}
             variants={containerVariants}
@@ -243,14 +274,14 @@ const Review = () => {
           >
             <motion.div 
               variants={itemVariants}
-              className="bg-[#120822]/60 backdrop-blur-md rounded-2xl shadow-xl border border-[#9c4dff]/20 overflow-hidden transition-all duration-500 hover:shadow-[#9c4dff]/30 hover:shadow-2xl p-8"
+              className="bg-[#120822]/80 backdrop-blur-md rounded-2xl shadow-xl border border-[#9c4dff]/20 overflow-hidden transition-all duration-500 hover:shadow-[#9c4dff]/30 hover:shadow-2xl p-8"
             >
               {/* Top gradient line */}
               <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-[#9c4dff] via-[#c840eb] to-[#ff5089]"></div>
               
               <motion.h1 
                 variants={itemVariants} 
-                className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-[#9c4dff] via-[#c840eb] to-[#ff5089] mb-2"
+                className="text-3xl md:text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-[#9c4dff] via-[#c840eb] to-[#ff5089] mb-3"
                 animate={{
                   backgroundPosition: ['0% center', '100% center'],
                 }}
@@ -265,16 +296,16 @@ const Review = () => {
               </motion.h1>
               
               {email && (
-                <motion.p variants={itemVariants} className="text-gray-300">
+                <motion.p variants={itemVariants} className="text-gray-300 text-lg">
                   Viewing feedback for: <span className="font-medium text-[#c840eb]">{email}</span>
                 </motion.p>
               )}
             </motion.div>
           </motion.div>
 
-          {/* Tasks List */}
+          {/* Loading State */}
           {isLoading ? (
-            <div className="flex justify-center items-center py-16">
+            <div className="flex justify-center items-center py-20">
               <div className="relative">
                 {/* Animated loading spinner with glowing effect */}
                 <div className="w-16 h-16 border-4 border-[#9c4dff]/30 border-t-[#9c4dff] rounded-full animate-spin"></div>
@@ -282,6 +313,7 @@ const Review = () => {
               </div>
             </div>
           ) : tasks.length > 0 ? (
+            /* Tasks List */
             <motion.div 
               ref={contentRef}
               variants={containerVariants}
@@ -292,11 +324,8 @@ const Review = () => {
               {tasks.map((task, index) => (
                 <motion.div
                   key={task._id || task.title}
-                  className="group bg-[#120822]/60 backdrop-blur-md rounded-xl shadow-md border border-[#9c4dff]/20 overflow-hidden transition-all duration-300 hover:shadow-[#9c4dff]/30 hover:shadow-xl cursor-pointer relative"
-                  onClick={() => {
-                    setSelectedTask(task);
-                    setShowModal(true);
-                  }}
+                  className="group bg-[#120822]/80 backdrop-blur-md rounded-xl shadow-md border border-[#9c4dff]/20 overflow-hidden transition-all duration-300 hover:shadow-[#9c4dff]/30 hover:shadow-xl cursor-pointer relative"
+                  onClick={() => handleTaskSelect(task)}
                   variants={cardVariants}
                   whileHover="hover"
                   custom={index}
@@ -315,9 +344,9 @@ const Review = () => {
                   </div>
                   
                   <div className="p-6 pl-8">
-                    <div className="flex justify-between items-start">
+                    <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-2">
                       <h2 className="text-xl font-semibold text-gray-100 group-hover:text-[#c840eb] transition-colors duration-200">{task.title}</h2>
-                      <span className="inline-flex items-center px-3 py-1 text-xs font-semibold text-[#c840eb] bg-[#9c4dff]/10 rounded-full shadow-sm">
+                      <span className="inline-flex items-center px-3 py-1 text-xs font-semibold text-[#c840eb] bg-[#9c4dff]/10 rounded-full shadow-sm self-start">
                         {task.categoryName}
                       </span>
                     </div>
@@ -357,11 +386,12 @@ const Review = () => {
               ))}
             </motion.div>
           ) : (
+            /* Empty state */
             <motion.div 
               variants={itemVariants}
               initial="hidden"
               animate="visible"
-              className="bg-[#120822]/60 backdrop-blur-md rounded-xl shadow-md border border-[#9c4dff]/20 p-8 text-center"
+              className="bg-[#120822]/80 backdrop-blur-md rounded-xl shadow-md border border-[#9c4dff]/20 p-8 text-center"
             >
               <svg xmlns="http://www.w3.org/2000/svg" className="h-16 w-16 mx-auto text-gray-500 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -377,14 +407,14 @@ const Review = () => {
       <AnimatePresence>
         {showModal && selectedTask && (
           <motion.div 
-            className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4"
+            className="fixed inset-0 bg-black/85 backdrop-blur-sm flex items-center justify-center z-50 p-4"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={() => setShowModal(false)}
           >
             <motion.div 
-              className="bg-[#120822]/90 backdrop-blur-lg border border-[#9c4dff]/30 rounded-xl shadow-2xl max-w-3xl w-full p-6 relative"
+              className="bg-[#120822]/90 backdrop-blur-lg border border-[#9c4dff]/30 rounded-xl shadow-2xl w-full max-w-3xl max-h-[90vh] overflow-hidden relative"
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.9, opacity: 0 }}
@@ -394,18 +424,19 @@ const Review = () => {
               {/* Modal glow effect */}
               <div className="absolute -inset-0.5 bg-gradient-to-r from-[#9c4dff]/20 to-[#ff5089]/20 rounded-xl blur-md -z-10"></div>
               
-              <motion.button
-                className="absolute top-4 right-4 text-gray-400 hover:text-gray-200 transition-colors"
-                onClick={() => setShowModal(false)}
-                whileHover={{ scale: 1.1 }}
-                whileTap={{ scale: 0.9 }}
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </motion.button>
-              
-              <div className="mb-6">
+              {/* Modal header */}
+              <div className="sticky top-0 bg-[#120822]/95 backdrop-blur-md border-b border-[#9c4dff]/20 p-6 pb-4">
+                <motion.button
+                  className="absolute top-4 right-4 text-gray-400 hover:text-gray-200 transition-colors"
+                  onClick={() => setShowModal(false)}
+                  whileHover={{ scale: 1.1 }}
+                  whileTap={{ scale: 0.9 }}
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </motion.button>
+                
                 <h2 className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-[#9c4dff] via-[#c840eb] to-[#ff5089] mb-1">{selectedTask.title}</h2>
                 <div className="flex items-center mb-4">
                   <span className="inline-flex items-center px-3 py-1 text-xs font-semibold text-[#c840eb] bg-[#9c4dff]/10 rounded-full">
@@ -415,55 +446,132 @@ const Review = () => {
                 <p className="text-gray-300">{selectedTask.description}</p>
               </div>
               
-              <h3 className="text-xl font-semibold text-gray-200 mb-4 flex items-center">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 text-[#c840eb]" viewBox="0 0 20 20" fill="currentColor">
-                  <path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3zM6 8a2 2 0 11-4 0 2 2 0 014 0zM16 18v-3a5.972 5.972 0 00-.75-2.906A3.005 3.005 0 0119 15v3h-3zM4.75 12.094A5.973 5.973 0 004 15v3H1v-3a3 3 0 013.75-2.906z" />
-                </svg>
-                Feedback from Reviewers
-              </h3>
-              
-              <motion.div 
-                className="space-y-4 max-h-96 overflow-y-auto pr-2"
-                initial="hidden"
-                animate="visible"
-                variants={containerVariants}
-              >
-                {selectedTask.feedback && selectedTask.feedback.length > 0 ? (
-                  selectedTask.feedback.map((feedback, index) => (
-                    <motion.div 
-                      key={feedback._id || index} 
-                      className="bg-[#1a0b2e]/50 backdrop-blur-sm p-5 rounded-lg border border-[#9c4dff]/20 shadow-sm hover:border-[#9c4dff]/40 transition-colors duration-300"
-                      variants={itemVariants}
-                      whileHover={{ y: -5, transition: { duration: 0.2 } }}
-                      custom={index}
-                    >
-                      <div className="flex items-start mb-3">
-                        <div className="bg-[#9c4dff]/20 rounded-full p-2 mr-3">
-                          <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-[#c840eb]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                          </svg>
-                        </div>
-                        <div>
-                          <h4 className="font-semibold text-gray-200">{feedback.participant}</h4>
-                        </div>
-                      </div>
-                      <p className="text-gray-300 pl-11 whitespace-pre-line">{feedback.feedback}</p>
-                    </motion.div>
-                  ))
-                ) : (
+              {/* Modal content - scrollable area */}
+              <div className="p-6 overflow-y-auto max-h-[calc(90vh-180px)]">
+                {/* Summary Section */}
+                {summaryLoading ? (
+                  <div className="mb-6 p-5 bg-[#1a0b2e]/70 rounded-lg border border-[#9c4dff]/20">
+                    <div className="flex items-center justify-center space-x-2 py-4">
+                      <div className="w-4 h-4 rounded-full bg-[#9c4dff] animate-pulse"></div>
+                      <div className="w-4 h-4 rounded-full bg-[#c840eb] animate-pulse" style={{ animationDelay: '0.2s' }}></div>
+                      <div className="w-4 h-4 rounded-full bg-[#ff5089] animate-pulse" style={{ animationDelay: '0.4s' }}></div>
+                      <span className="ml-2 text-gray-300">Loading summary data...</span>
+                    </div>
+                  </div>
+                ) : summaryData ? (
                   <motion.div 
-                    className="text-center py-8"
-                    variants={itemVariants}
+                    className="mb-6 bg-[#1a0b2e]/70 backdrop-blur-sm p-6 rounded-lg border border-[#9c4dff]/20 shadow-lg"
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.5 }}
                   >
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 mx-auto text-gray-500 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-                    </svg>
-                    <p className="text-gray-400 font-medium">No feedback available for this task yet.</p>
+                    <h3 className="text-xl font-semibold text-gray-200 mb-4 flex items-center">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 text-[#c840eb]" viewBox="0 0 20 20" fill="currentColor">
+                        <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                      </svg>
+                      Feedback Summary
+                    </h3>
+                    
+                    {/* Sentiment Analysis */}
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-5">
+                      <div className="bg-[#1a0b2e]/90 p-4 rounded-lg text-center border border-[#9c4dff]/10">
+                        <div className="text-green-400 font-semibold mb-1">Positive</div>
+                        <div className="text-2xl font-bold">{summaryData.sentiment_analysis?.positive || '0%'}</div>
+                      </div>
+                      <div className="bg-[#1a0b2e]/90 p-4 rounded-lg text-center border border-[#9c4dff]/10">
+                        <div className="text-yellow-400 font-semibold mb-1">Neutral</div>
+                        <div className="text-2xl font-bold">{summaryData.sentiment_analysis?.neutral || '0%'}</div>
+                      </div>
+                      <div className="bg-[#1a0b2e]/90 p-4 rounded-lg text-center border border-[#9c4dff]/10">
+                        <div className="text-red-400 font-semibold mb-1">Negative</div>
+                        <div className="text-2xl font-bold">{summaryData.sentiment_analysis?.negative || '0%'}</div>
+                      </div>
+                    </div>
+                    
+                    {/* Overall Summary */}
+                    <div className="mb-5 bg-[#1a0b2e]/40 p-4 rounded-lg border border-[#9c4dff]/10">
+                      <h4 className="font-semibold text-[#c840eb] mb-2 flex items-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                        </svg>
+                        Overall Summary
+                      </h4>
+                      <p className="text-gray-300 leading-relaxed">{summaryData.overall_summary}</p>
+                    </div>
+                    
+                    {/* Improvement Points */}
+                    {summaryData.improvement_points && summaryData.improvement_points.length > 0 && (
+                      <div className="bg-[#1a0b2e]/40 p-4 rounded-lg border border-[#9c4dff]/10">
+                        <h4 className="font-semibold text-[#c840eb] mb-2 flex items-center">
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                          </svg>
+                          Areas for Improvement
+                        </h4>
+                        <ul className="list-disc pl-5 space-y-2">
+                          {summaryData.improvement_points.map((point, index) => (
+                            <li key={index} className="text-gray-300">{point}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
                   </motion.div>
-                )}
-              </motion.div>
+                ) : null}
+                
+                {/* Individual Feedback Section */}
+                <div className="mb-4">
+                  <h3 className="text-xl font-semibold text-gray-200 mb-4 flex items-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 text-[#c840eb]" viewBox="0 0 20 20" fill="currentColor">
+                      <path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3zM6 8a2 2 0 11-4 0 2 2 0 014 0zM16 18v-3a5.972 5.972 0 00-.75-2.906A3.005 3.005 0 0119 15v3h-3zM4.75 12.094A5.973 5.973 0 004 15v3H1v-3a3 3 0 013.75-2.906z" />
+                    </svg>
+                    Individual Feedback
+                  </h3>
+                
+                  <motion.div 
+                    className="space-y-4"
+                    initial="hidden"
+                    animate="visible"
+                    variants={containerVariants}
+                  >
+                    {selectedTask.feedback && selectedTask.feedback.length > 0 ? (
+                      selectedTask.feedback.map((feedback, index) => (
+                        <motion.div 
+                          key={feedback._id || index} 
+                          className="bg-[#1a0b2e]/70 backdrop-blur-sm p-5 rounded-lg border border-[#9c4dff]/20 shadow-sm hover:border-[#9c4dff]/40 transition-colors duration-300"
+                          variants={itemVariants}
+                          whileHover={{ y: -5, transition: { duration: 0.2 } }}
+                          custom={index}
+                        >
+                          <div className="flex items-start mb-3">
+                            <div className="bg-[#9c4dff]/20 rounded-full p-2 mr-3">
+                              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-[#c840eb]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                              </svg>
+                            </div>
+                            <div>
+                              <h4 className="font-semibold text-gray-200">{feedback.participant}</h4>
+                            </div>
+                          </div>
+                          <p className="text-gray-300 pl-11 whitespace-pre-line">{feedback.feedback}</p>
+                        </motion.div>
+                      ))
+                    ) : (
+                      <motion.div 
+                        className="text-center py-8 bg-[#1a0b2e]/40 rounded-lg border border-[#9c4dff]/10"
+                        variants={itemVariants}
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 mx-auto text-gray-500 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                        </svg>
+                        <p className="text-gray-400 font-medium">No feedback available for this task yet.</p>
+                      </motion.div>
+                    )}
+                  </motion.div>
+                </div>
+              </div>
               
-              <div className="mt-6 flex justify-end">
+              {/* Modal footer */}
+              <div className="sticky bottom-0 bg-[#120822]/95 backdrop-blur-md border-t border-[#9c4dff]/20 p-4 flex justify-end">
                 <motion.button
                   className="relative px-6 py-2.5 text-white font-medium rounded-lg overflow-hidden group"
                   onClick={() => setShowModal(false)}
@@ -487,7 +595,7 @@ const Review = () => {
         )}
       </AnimatePresence>
 
-      {/* Add some global animation styles */}
+      {/* Animation styles */}
       <style jsx>{`
         @keyframes fadeIn {
           from { opacity: 0; }
