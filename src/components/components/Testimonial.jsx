@@ -5,7 +5,7 @@ import avatar2 from '../assets/images/utkarsh.jpeg';
 import avatar3 from '../assets/images/nikhil.jpeg';
 
 const FoundersSection = () => {
-  const founderImages = [ avatar3,avatar, avatar2, avatar1];
+  const founderImages = [ avatar3,avatar2, avatar, avatar1];
 
   // Founders data with roles and contributions
   const founders = [
@@ -15,12 +15,12 @@ const FoundersSection = () => {
       contribution: "Architected the core platform and led the development of our innovative feedback system."
     },
     {
-      name: "Gaurav Verma",
+      name: "Utkarsh Srivastav",
       role: "Frontend Developer",
       contribution: "Implemented responsive and interactive user interfaces, ensuring smooth and accessible user experiences across devices."
     },
     {
-      name: "Utkarsh Shrivastava",
+      name: "Gaurav Verma",
       role: "Backend Developer",
       contribution: "Developed and optimized the server-side architecture, database design, and API integrations for a robust platform."
     },
