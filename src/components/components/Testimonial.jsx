@@ -1,7 +1,12 @@
 import { Link } from 'react-router-dom';
 import avatar from '../assets/images/avatar.jpg';
+import avatar1 from '../assets/images/anas.jpeg';
+import avatar2 from '../assets/images/utkarsh.jpeg';
+import avatar3 from '../assets/images/nikhil.jpeg';
 
 const FoundersSection = () => {
+  const founderImages = [ avatar3,avatar, avatar2, avatar1];
+
   // Founders data with roles and contributions
   const founders = [
     {
@@ -11,20 +16,21 @@ const FoundersSection = () => {
     },
     {
       name: "Gaurav Verma",
-      role: "Product Strategist",
-      contribution: "Shaped the product vision and guided the platform's development to meet real-world needs."
+      role: "Frontend Developer",
+      contribution: "Implemented responsive and interactive user interfaces, ensuring smooth and accessible user experiences across devices."
+    },
+    {
+      name: "Utkarsh Shrivastava",
+      role: "Backend Developer",
+      contribution: "Developed and optimized the server-side architecture, database design, and API integrations for a robust platform."
     },
     {
       name: "Mohd Anas",
-      role: "UX Designer",
-      contribution: "Created the intuitive user experience that makes giving and receiving feedback seamless."
-    },
-    {
-      name: "Aakash Singh",
-      role: "Marketing & Growth",
-      contribution: "Drives our outreach strategy and builds relationships with communities and organizations."
+      role: "AI & NLP Model Developer",
+      contribution: "Built intelligent feedback systems using Natural Language Processing and AI models for personalized user insights."
     }
   ];
+  
 
   return (
     <section id='founders' className="bg-gray-900 py-20">
@@ -42,7 +48,7 @@ const FoundersSection = () => {
           {founders.map((founder, index) => (
             <div key={index} className='flex flex-col items-center p-6 space-y-6 rounded-lg bg-gray-800/70 backdrop-blur-sm border border-purple-900/20 shadow-xl transition-transform duration-300 hover:-translate-y-2 hover:shadow-purple-900/20'>
               <img 
-                src={avatar} 
+                src={founderImages[index]} 
                 className='w-24 h-24 -mt-14 rounded-full object-cover border-4 border-gray-900 shadow-md' 
                 alt={founder.name} 
               />
